@@ -39,10 +39,18 @@ heroku buildpacks:add https://github.com/ably-forks/metabase-buildpack#branch-na
 Add a PostgreSQL database to the test app:
 
 ```
-heroku addons:create heroku-postgresql:mini -a metabase-upgrade-test
+heroku addons:create heroku-postgresql:essential-0 --app metabase-upgrade-test
 ```
 
-Next you would want to deploy a copy of Metabase to this test Heroku app, for that you need to follow the instructions in the README of our metabase repository.
+(Optional) Clone the production PostgreSQL config if you want to ensure the upgrade goes smooth:
+
+Using Heroku's [Direct database-to-database copy](https://devcenter.heroku.com/articles/heroku-postgres-backups#direct-database-to-database-copies) feature you can clone the production database to your new app to ensure smooth sailing:
+
+```
+heroku pg:copy production-app-name::DATABASE_URL DATABASE_URL --app metabase-upgrade-test
+```
+
+Next you would want to deploy a copy of Metabase to this test Heroku app, for that you need to follow the instructions further down in this README.
 
 After you've deployed Metabase and you confirm it is working you can merge the PR and destroy the test app:
 
@@ -50,18 +58,38 @@ After you've deployed Metabase and you confirm it is working you can merge the P
 heroku apps:destroy -a metabase-upgrade-test
 ```
 
+## Deploying updates
 
-## Empty commits for deploying updates
-
-Clone this repository from Heroku:
+Clone your metabase repository from Heroku:
 
 ~~~
-$ heroku login
-$ heroku git:clone -a my-metabase 
-$ cd my-metabase
+heroku login
+heroku git:clone --app my-metabase 
+cd my-metabase
 ~~~
 
-You might also need to reset your local `main` to match Heroku if someone else deployed:
+### Deploying to the test app
+
+Switch the git remote to be the test app:
+
+```
+heroku git:remote --remote metabase-upgrade-test --app metabase-upgrade-test
+```
+
+Push to the test app:
+
+```
+git push metabase-upgrade-test --force
+```
+### Deploying to production
+
+Ensure your Heroku remote is correct:
+
+```
+heroku git:remote --app my-metabase
+```
+
+You also need to reset your local `main` to match Heroku if someone else deployed:
 
 ~~~
 $ git fetch heroku
@@ -71,6 +99,6 @@ $ git reset --hard heroku/main
 Use an empty commit to trigger a fresh build on Heroku:
 
 ~~~
-$ git commit --allow-empty -m Upgrade metabase
+$ git commit --allow-empty -m "Upgrade metabase"
 $ git push heroku main
 ~~~
