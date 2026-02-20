@@ -1,3 +1,6 @@
+> [!WARNING]
+> **This repository is deprecated.** Metabase's JAR now exceeds Heroku's slug size limit, making this buildpack unusable. Deployment has moved to a Docker-based approach.
+
 # Heroku Buildpack for Metabase
 
 Add the following to your app.json:
